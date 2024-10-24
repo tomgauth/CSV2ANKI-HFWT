@@ -2,11 +2,17 @@ import streamlit as st
 import pandas as pd
 from services.anki_deck_creator import create_anki_deck
 from services.anki_models import recall_model, recognize_model
+from services.delete_files import delete_audio_files
 import io
 
 
 # Streamlit app
 st.title("Simple Flashcard Generator (with Debugging)")
+
+# Button to delete all audio files
+if st.button("Delete audio files"):
+    delete_audio_files()  # call delete function
+    st.success("All audio files deletes")
 
 # Input text field for pasting TSV (tab-separated) content
 input_text = st.text_area("Paste your table data here (tab-separated)")
@@ -17,16 +23,16 @@ if st.button("Generate Flashcards"):
         try:
             # Convert the input text (tab-separated) to a DataFrame
             data = pd.read_csv(io.StringIO(input_text), sep='\t')
-            st.write("Debug: Table successfully parsed into DataFrame.")
-            st.write("Here is your table:")
+            # st.write("Debug: Table successfully parsed into DataFrame.")
+            # st.write("Here is your table:")
             st.dataframe(data)
 
             # Hardcoded model to recall_model (you can define recall_model elsewhere)
             model = recall_model()
-            st.write("Debug: Recall model initialized.")
+            # st.write("Debug: Recall model initialized.")
 
             # Generate the Anki deck using the recall model
-            anki_file = create_anki_deck(data, model)
+            anki_file = create_anki_deck(data)
             st.success(f"Anki Deck generated: {anki_file}")
             
             # Provide a download link for the generated Anki deck

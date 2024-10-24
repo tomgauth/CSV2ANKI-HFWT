@@ -7,7 +7,6 @@ load_dotenv()
 
 # Initialize Eleven Labs client with API key
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
-print(ELEVENLABS_API_KEY) # playing with Fiiiiiire ⽕
 
 client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
 
