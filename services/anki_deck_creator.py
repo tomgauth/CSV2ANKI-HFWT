@@ -4,88 +4,78 @@ import io
 import genanki
 import random
 from services.anki_models import recall_model, recognize_model
-from services.tts_service import generate_audio
+from services.tts_service import generate_audio  # Import audio generation function
 
+# Define default column mappings for preprocessing
+COLUMN_MAPPINGS = {
+    'French': 'TargetLanguage',
+    'English': 'UserLanguage',
+    'English Auto': 'UserLanguage',
+    'IPA': 'TargetIPA',
+    'Notes': 'Notes',
+    'card_type': 'card_type'
+}
 
-# Function to create an Anki recall deck with simplified fields
-def create_anki_deck(data):
-    # Store the list of media files (audio)
+# Function to preprocess the DataFrame
+def preprocess_flashcards(data):
+    data = data.rename(columns={col: COLUMN_MAPPINGS[col] for col in data.columns if col in COLUMN_MAPPINGS})
+    
+    # Add missing columns as empty strings to ensure we have all required columns
+    for target_col in COLUMN_MAPPINGS.values():
+        if target_col not in data.columns:
+            data[target_col] = ""  # Add missing columns as empty strings
+
+    return data
+
+# Function to create an Anki recall deck
+def create_anki_deck(data, model, deck_name):
+    # Preprocess data to ensure all required columns are present
+    data = preprocess_flashcards(data)
     media_files = []
 
     deck_id = random.randrange(1 << 30, 1 << 31)
-    my_deck = genanki.Deck(deck_id, 'Generated Flashcards')
-    # st.write(f"Debug: Initialized Anki deck with ID {deck_id}")
+    my_deck = genanki.Deck(deck_id, deck_name)
 
     for index, row in data.iterrows():
-        fields = [
-                str(row['UserLanguage']) if 'UserLanguage' in row else '',
-                str(row['TargetLanguage']) if 'TargetLanguage' in row else '',
-                str(row['TargetAudio']) if 'TargetAudio' in row else '',
-                str(row['TargetIPA']) if 'TargetIPA' in row else '',
-                str(row['Notes']) if 'Notes' in row else '',
-                str(row['card_type']) if 'card_type' in row else '',  # Add card_type field
-            ]
+        # Generate audio for each row's 'TargetLanguage' and add it to 'TargetAudio'
+        target_language_text = str(row['TargetLanguage'])
+        target_audio_path = ""
         
-        # Ensure no extra fields are added beyond the 6 required fields
-        try:
-            my_note = genanki.Note(
-                model=model,
-                fields=fields  # Pass exactly 6 fields
-            )
-            my_deck.add_note(my_note)
-            st.write(f"Debug: Added note for row {index}")
-        except Exception as e:
-            st.error(f"Error adding note for row {index}: {e}")
-        # st.write(f"Debug: Processing row {index} with data: {row.to_dict()}")
+        # Generate audio if there's text in the 'TargetLanguage' field
+        if target_language_text:
+            try:
+                target_audio_path = generate_audio(target_language_text)
+                media_files.append(target_audio_path)  # Add audio file to media files
+            except Exception as e:
+                st.error(f"Error generating audio for row {index}: {e}")
 
-        # Check the flashcard type and select the appropriate model
-        flashcard_type = row.get('card_type', 'Recall')  # Default to 'recall' if not specified
-        if flashcard_type == 'Recognize':
-            model = recognize_model()
-            # st.write("Debug: Using Recognize model.")
-        else:
-            model = recall_model()
-            # st.write("Debug: Using Recall model.")
+        # Ensure that fields contain exactly 6 items, adding empty strings if necessary
+        fields = [
+            str(row['UserLanguage']),
+            target_language_text,
+            f'[sound:{target_audio_path}]' if target_audio_path else "",  # Include audio
+            str(row['TargetIPA']),
+            str(row['Notes']),
+            str(row['card_type'])
+        ]
 
-        # Generate fields based on the selected model
-        for field in ['French', 'English', 'French IPA', 'notes', 'card_type']:
-            value = str(row[field]) if field in row and pd.notna(row[field]) else ''
-            fields.append(value)
-            # st.write(f"Debug: Added field '{field}' with value '{value}'")
 
-        # For Recognize cards, generate audio for the front side
-        if flashcard_type == 'Recognize':
-            french_text = str(row['French']) if 'French' in row else ''
-            if french_text:
-                try:
-                    audio_file = generate_audio(french_text)
-                    # st.write(f"Debug: Audio generated and saved as {audio_file}")
-                    fields.insert(0, f'[sound:{audio_file}]')  # Add audio to the front
-                    media_files.append(audio_file)
-                except Exception as e:
-                    st.error(f"Error generating audio for row {index}: {e}")
-            else:
-                fields.insert(0, '')  # Leave empty if no French text
-                # st.write(f"Debug: No French text found for row {index}. Skipping audio generation.")
-
-        # Create the note with all fields
+        # Create the note with all 6 fields
         try:
             my_note = genanki.Note(
                 model=model,
                 fields=fields
             )
             my_deck.add_note(my_note)
-            # st.write(f"Debug: Added note for row {index}")
         except Exception as e:
             st.error(f"Error adding note for row {index}: {e}")
 
-    # Create the Anki package and include media files (audio)
-    try:
+    # Create the Anki package and include media files
+    try:        
         my_package = genanki.Package(my_deck)
         my_package.media_files = media_files
-        output_apkg = 'output_flashcards.apkg'
+        output_apkg = f"{deck_name.replace(' ', '_')}.apkg"
         my_package.write_to_file(output_apkg)
-        # st.write(f"Debug: Anki package saved as {output_apkg}")
     except Exception as e:
         st.error(f"Error saving Anki package: {e}")
 
