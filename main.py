@@ -1,45 +1,16 @@
-# main.py
 import streamlit as st
 import pandas as pd
 from services.anki_deck_creator import create_anki_deck
 from services.anki_models import recall_model, recognize_model
-from services.delete_files import delete_audio_files
+from services.delete_files import delete_audio_files_apkg_files
 import io
-
-
-
-st.session_state
-
-# Define default column names and their corresponding target names
-DEFAULT_COLUMNS = {
-    'French': 'TargetLanguage',
-    'English': 'UserLanguage',
-    'English Auto': 'UserLanguage',
-    'IPA': 'TargetIPA',
-    'Notes': 'Notes'
-}
-
-# Function to match columns from user input to required columns
-def match_columns(df):
-    # Create a new DataFrame with expected columns
-    matched_df = pd.DataFrame()
-    
-    # Iterate through each required column and check if it exists in the input DataFrame
-    for default_col, target_col in DEFAULT_COLUMNS.items():
-        if default_col in df.columns:
-            matched_df[target_col] = df[default_col]
-        else:
-            matched_df[target_col] = ""  # Add empty column if missing
-    
-    return matched_df
-
 
 # Streamlit app
 st.title("Simple Flashcard Generator (with Model Selection)")
 
 # Button to delete all audio files
-if st.button("Delete all audio files"):
-    delete_audio_files()
+if st.button("Delete all audio files and deck generated"):
+    delete_audio_files_apkg_files()
     st.success("All audio files deleted.")
 
 # Input field to name the Anki deck
@@ -62,19 +33,14 @@ if st.button("Generate Flashcards"):
     if input_text:
         try:
             # Convert the input text (tab-separated) to a DataFrame
-            raw_data = pd.read_csv(io.StringIO(input_text), sep='\t')
-
-            # Match columns and adjust DataFrame structure
-            data = match_columns(raw_data)
-
-            # Display the DataFrame preview
-            st.write("Here is your matched table:")
+            data = pd.read_csv(io.StringIO(input_text), sep='\t')
+            st.write("Initial data preview:")
             st.dataframe(data)
 
             # Generate the Anki deck using the selected model and deck name
             anki_file = create_anki_deck(data, model, deck_name)
             st.success(f"Anki Deck '{deck_name}' generated successfully.")
-            
+            b
             # Provide a download link for the generated Anki deck
             with open(anki_file, 'rb') as f:
                 st.download_button(f"Download {deck_name}", f, file_name=anki_file)
