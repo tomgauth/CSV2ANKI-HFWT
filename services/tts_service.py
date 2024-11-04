@@ -10,6 +10,24 @@ ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 
 client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
 
+
+FR_VOICE_IDS = [
+    "F1toM6PcP54s45kOOAyV", # Mademoiselle French
+    "70QakWcpr1EAWDdnypvd", # 35 yo North East Parisian smoker "Meuf"
+    "ufWL6S7fryuQBD3Y5J3I", # Jeremy Conversational
+    "5Qfm4RqcAer0xoyWtoHC", # Maxime - French Young male
+    "TQaDhGYcKI0vrQueAmVO", # Lucien
+    "ohItIVrXTBI80RrUECOD" # Guillaume - Narration
+    # Add as many as you want
+]
+
+TR_VOICE_IDS = [
+    "HllA1j2zLOqUQ4kLjMmK", # Alper
+    "KbaseEXyT9EE0CQLEfbB", # Belma
+    "PdYVUd1CAGSXsTvZZTNn" # Mehidevran
+]
+
+
 def generate_audio(text: str) -> str:
     """
     Convert the input text to speech and save it as an MP3 file using Eleven Labs.
@@ -47,3 +65,6 @@ def generate_audio(text: str) -> str:
     
     # Return the path of the saved audio file
     return save_file_path
+
+
+    import requests

@@ -38,7 +38,7 @@ def preprocess_flashcards(data):
 
 
 # Function to create an Anki recall deck with debug print statements
-def create_anki_deck(data, model, deck_name):
+def create_anki_deck(selected_language, data, model, deck_name):
     # Preprocess data to ensure all required columns are present
     data = preprocess_flashcards(data)
     if data is None:
@@ -66,7 +66,7 @@ def create_anki_deck(data, model, deck_name):
         target_audio_path = ""
         if target_language_text:
             try:
-                target_audio_path = generate_audio(target_language_text)  # Simulated audio path for testing
+                target_audio_path = generate_audio(selected_language, target_language_text)  # Simulated audio path for testing
                 media_files.append(target_audio_path)
                 print(f"Audio path '{target_audio_path}' added to media_files")
             except Exception as e:

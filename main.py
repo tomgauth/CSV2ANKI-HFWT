@@ -8,6 +8,9 @@ import io
 # Streamlit app
 st.title("Simple Flashcard Generator (with Model Selection)")
 
+# Add a dropdown for language selection
+selected_language = st.selectbox("Select the language for response audio:", ("French", "Turkish"))
+
 # Button to delete all audio files
 if st.button("Delete all audio files and deck generated"):
     delete_audio_files_apkg_files()
@@ -38,9 +41,9 @@ if st.button("Generate Flashcards"):
             st.dataframe(data)
 
             # Generate the Anki deck using the selected model and deck name
-            anki_file = create_anki_deck(data, model, deck_name)
+            anki_file = create_anki_deck(selected_language, data, model, deck_name)
             st.success(f"Anki Deck '{deck_name}' generated successfully.")
-            b
+            
             # Provide a download link for the generated Anki deck
             with open(anki_file, 'rb') as f:
                 st.download_button(f"Download {deck_name}", f, file_name=anki_file)
